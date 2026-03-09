@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPU Scheduling Simulation Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1>⚙️ CPU Scheduler</h1>
+        </div>
+        <nav class="sidebar-nav">
+            <button class="nav-btn active" data-section="dashboard">
+                <span class="icon">📊</span> Dashboard
+            </button>
+            <button class="nav-btn" data-section="algorithms">
+                <span class="icon">🔄</span> Algorithms
+            </button>
+            <button class="nav-btn" data-section="compare">
+                <span class="icon">📈</span> Compare All
+            </button>
+        </nav>
+    </aside>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section active">
+            <div class="section-header">
+                <h2>CPU Scheduling Simulation</h2>
+                <p>Configure processes and simulate scheduling algorithms</p>
+            </div>
+
+            <!-- Algorithm Configuration -->
+            <div class="card algorithm-card">
+                <h3>Algorithm Selection</h3>
+                <div class="form-group">
+                    <label for="algorithm">Select Algorithm:</label>
+                    <select id="algorithm" class="algorithm-select">
+                        <optgroup label="Non-Preemptive">
+                            <option value="fcfs">First Come First Serve (FCFS)</option>
+                            <option value="sjf">Shortest Job First (SJF)</option>
+                            <option value="nonPreemptivePriority">Non-Preemptive Priority</option>
+                        </optgroup>
+                        <optgroup label="Preemptive">
+                            <option value="roundRobin">Round Robin (RR)</option>
+                            <option value="srtf">Shortest Remaining Time First (SRTF)</option>
+                            <option value="preemptivePriority">Preemptive Priority</option>
+                            <option value="priorityRoundRobin">Priority with Round Robin</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <!-- Time Quantum Input (Hidden by default) -->
+                <div class="form-group" id="timeQuantumGroup" style="display: none;">
+                    <label for="timeQuantum">Time Quantum:</label>
+                    <input type="number" id="timeQuantum" class="input-field" value="2" min="1">
+                </div>
+            </div>
+
+            <!-- Process Input Card -->
+            <div class="card input-card">
+                <h3>Add Process</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="processId">Process ID:</label>
+                        <input type="text" id="processId" class="input-field" placeholder="P1">
+                    </div>
+                    <div class="form-group">
+                        <label for="arrivalTime">Arrival Time:</label>
+                        <input type="number" id="arrivalTime" class="input-field" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="burstTime">Burst Time:</label>
+                        <input type="number" id="burstTime" class="input-field" value="1" min="1">
+                    </div>
+
+                    <!-- Priority Input (Hidden by default) -->
+                    <div class="form-group" id="priorityGroup" style="display: none;">
+                        <label for="priority">Priority:</label>
+                        <input type="number" id="priority" class="input-field" value="1" min="1">
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button id="addBtn" class="btn btn-primary">+ Add Process</button>
+                    <button id="removeBtn" class="btn btn-danger">- Remove Last</button>
+                    <button id="resetBtn" class="btn btn-secondary">↻ Reset</button>
+                    <button id="simulateBtn" class="btn btn-success">▶ Simulate</button>
+                </div>
+            </div>
+
+            <!-- Process Table -->
+            <div class="card table-card">
+                <h3>Processes</h3>
+                <div class="table-wrapper">
+                    <table id="processTable" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Process ID</th>
+                                <th>Arrival Time</th>
+                                <th>Burst Time</th>
+                                <th id="priorityHeader" style="display: none;">Priority</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr class="empty-row">
+                                <td colspan="4">No processes added yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Results Section (Hidden initially) -->
+            <div id="resultsSection" style="display: none;">
+                <!-- Gantt Chart -->
+                <div class="card gantt-card">
+                    <h3>Gantt Chart</h3>
+                    <div id="ganttChart" class="gantt-chart"></div>
+                </div>
+
+                <!-- Results Table -->
+                <div class="card results-table-card">
+                    <h3>Scheduling Results</h3>
+                    <div class="table-wrapper">
+                        <table id="resultsTable" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Process ID</th>
+                                    <th>Completion Time</th>
+                                    <th>Waiting Time</th>
+                                    <th>Turnaround Time</th>
+                                    <th id="responseTimeHeader" style="display: none;">Response Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Metrics -->
+                <div class="card metrics-card">
+                    <h3>Performance Metrics</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <span class="metric-label">Avg Waiting Time</span>
+                            <span id="avgWaitingTime" class="metric-value">0</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Avg Turnaround Time</span>
+                            <span id="avgTurnaroundTime" class="metric-value">0</span>
+                        </div>
+                        <div class="metric-item" id="avgResponseTimeItem" style="display: none;">
+                            <span class="metric-label">Avg Response Time</span>
+                            <span id="avgResponseTime" class="metric-value">0</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Throughput</span>
+                            <span id="throughput" class="metric-value">0</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">CPU Utilization</span>
+                            <span id="cpuUtilization" class="metric-value">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-grid">
+                    <div class="card chart-card">
+                        <h3>Waiting Time per Process</h3>
+                        <canvas id="waitingTimeChart"></canvas>
+                    </div>
+                    <div class="card chart-card">
+                        <h3>Turnaround Time per Process</h3>
+                        <canvas id="turnaroundTimeChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Export Button -->
+                <div class="export-section">
+                    <button id="exportPdfBtn" class="btn btn-primary" onclick="exportResultsAsPDF()">
+                        <i class="fas fa-download"></i> Export as PDF
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Algorithms Information Section -->
+        <section id="algorithms" class="section">
+            <div class="section-header">
+                <h2>Scheduling Algorithms</h2>
+                <p>Learn about different CPU scheduling algorithms</p>
+            </div>
+
+            <div class="algorithms-grid">
+                <div class="card algo-info">
+                    <h4>FCFS</h4>
+                    <p><strong>Type:</strong> Non-Preemptive</p>
+                    <p>Processes are executed in the order they arrive. Simple and fair but can cause long waiting times.</p>
+                </div>
+                <div class="card algo-info">
+                    <h4>SJF</h4>
+                    <p><strong>Type:</strong> Non-Preemptive</p>
+                    <p>Executes the process with the shortest burst time. Minimizes average waiting time.</p>
+                </div>
+                <div class="card algo-info">
+                    <h4>Non-Preemptive Priority</h4>
+                    <p><strong>Type:</strong> Non-Preemptive</p>
+                    <p>Processes with higher priority are executed first. Can lead to starvation.</p>
+                </div>
+                <div class="card algo-info">
+                    <h4>Round Robin</h4>
+                    <p><strong>Type:</strong> Preemptive</p>
+                    <p>Each process gets a time quantum. Fair distribution but may increase context switches.</p>
+                </div>
+                <div class="card algo-info">
+                    <h4>SRTF</h4>
+                    <p><strong>Type:</strong> Preemptive</p>
+                    <p>Preempts when shorter process arrives. Optimal for average waiting time.</p>
+                </div>
+                <div class="card algo-info">
+                    <h4>Preemptive Priority</h4>
+                    <p><strong>Type:</strong> Preemptive</p>
+                    <p>Higher priority process preempts lower priority. Responsive to important tasks.</p>
+                </div>
+                <div class="card algo-info">
+                    <h4>Priority with Round Robin</h4>
+                    <p><strong>Type:</strong> Preemptive</p>
+                    <p>Combines priority and round robin. Processes ready at same priority use RR.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Compare All Algorithms Section -->
+        <section id="compare" class="section">
+            <div class="section-header">
+                <h2>Compare All Algorithms</h2>
+                <p>Run all algorithms on your processes and compare performance</p>
+            </div>
+
+            <div class="card">
+                <button id="compareAllBtn" class="btn btn-primary btn-large">
+                    🚀 Run Comparison
+                </button>
+            </div>
+
+            <div id="comparisonSection" style="display: none;">
+                <!-- Comparison Results Table -->
+                <div class="card">
+                    <h3>Algorithm Comparison Results</h3>
+                    <div class="table-wrapper">
+                        <table id="comparisonTable" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Algorithm</th>
+                                    <th>Avg Waiting Time</th>
+                                    <th>Avg Turnaround Time</th>
+                                    <th>Avg Response Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comparisonTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Comparison Chart -->
+                <div class="card">
+                    <h3>Algorithm Comparison Chart</h3>
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+
+                <!-- Best Algorithm Recommendation -->
+                <div class="card recommendation-card">
+                    <div id="recommendationContent"></div>
+                </div>
+
+                <!-- Export Button -->
+                <div class="export-section">
+                    <button id="exportComparisonPdfBtn" class="btn btn-primary" onclick="exportResultsAsPDF()">
+                        <i class="fas fa-download"></i> Export Comparison as PDF
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Loading Animation -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <p>Simulating...</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
