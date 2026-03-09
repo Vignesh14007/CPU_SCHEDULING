@@ -29,7 +29,7 @@ function hideLoading() {
 
 function exportResultsAsPDF() {
     if (!schedulingResult) {
-        showToast('No results to export. Please simulate first.', 'danger');
+        showToast('No results to export. Please simulate first.', 'error');
         return;
     }
 
@@ -272,7 +272,7 @@ function exportResultsAsPDF() {
         showToast('PDF exported successfully!', 'success');
     } catch (error) {
         console.error('PDF export error:', error);
-        showToast('Error exporting PDF', 'danger');
+        showToast('Error exporting PDF', 'error');
     }
 }
 
